@@ -4,35 +4,58 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ResumeGPT – Gemini 자소서 생성기</title>
-    <!-- Tailwind CSS CDN 로드 (레이아웃 스타일링) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 커스텀 스타일 시트 연결 -->
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body class="bg-gray-50 text-gray-800">
-    <!-- 헤더 -->
-    <header class="bg-indigo-600 text-white text-2xl font-semibold py-5 text-center shadow-md">
+  <body class="bg-gray-500 text-gray-800">
+    <header
+      class="bg-indigo-600 text-white text-2xl font-semibold py-5 text-center shadow-md"
+    >
       💼 ResumeGPT – Gemini 자소서 생성기
     </header>
 
-    <main class="max-w-3xl mx-auto my-8 md:my-12 bg-white p-6 md:p-10 rounded-xl shadow-2xl">
-      <form id="resumeForm" onsubmit="event.preventDefault(); generateResume();">
-        <!-- 입력 필드 -->
+    <main
+      class="max-w-3xl mx-auto my-8 md:my-12 bg-white p-6 md:p-10 rounded-xl shadow-2xl"
+    >
+      <form id="resumeForm">
         <div class="space-y-4">
           <div>
-            <label for="name" class="block font-semibold mt-4 text-gray-700">이름</label>
-            <input type="text" id="name" placeholder="예: 김지훈" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+            <label for="name" class="block font-semibold mt-4 text-gray-700"
+              >이름</label
+            >
+            <input
+              type="text"
+              id="name"
+              placeholder="예: 김지훈"
+              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+            />
           </div>
           <div>
-            <label for="role" class="block font-semibold mt-4 text-gray-700">지원 직무</label>
-            <input type="text" id="role" placeholder="예: 백엔드 개발자" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+            <label for="role" class="block font-semibold mt-4 text-gray-700"
+              >지원 직무</label
+            >
+            <input
+              type="text"
+              id="role"
+              placeholder="예: 백엔드 개발자"
+              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+            />
           </div>
           <div>
-            <label for="company" class="block font-semibold mt-4 text-gray-700">회사명</label>
-            <input type="text" id="company" placeholder="예: Toss" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+            <label for="company" class="block font-semibold mt-4 text-gray-700"
+              >회사명</label
+            >
+            <input
+              type="text"
+              id="company"
+              placeholder="예: Toss"
+              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
+            />
           </div>
           <div>
-            <label for="skills" class="block font-semibold mt-4 text-gray-700">보유 기술</label>
+            <label for="skills" class="block font-semibold mt-4 text-gray-700"
+              >보유 기술</label
+            >
             <input
               type="text"
               id="skills"
@@ -41,7 +64,11 @@
             />
           </div>
           <div>
-            <label for="achievements" class="block font-semibold mt-4 text-gray-700">성과 또는 경험</label>
+            <label
+              for="achievements"
+              class="block font-semibold mt-4 text-gray-700"
+              >성과 또는 경험</label
+            >
             <textarea
               id="achievements"
               rows="2"
@@ -50,7 +77,11 @@
             ></textarea>
           </div>
           <div>
-            <label for="motivation" class="block font-semibold mt-4 text-gray-700">지원 동기</label>
+            <label
+              for="motivation"
+              class="block font-semibold mt-4 text-gray-700"
+              >지원 동기</label
+            >
             <textarea
               id="motivation"
               rows="2"
@@ -60,24 +91,29 @@
           </div>
         </div>
 
-        <!-- 메시지 박스 (alert() 대체) -->
-        <div id="messageBox" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden" role="alert">
-          <!-- 메시지 내용이 여기에 들어갑니다. -->
-        </div>
+        <div
+          id="messageBox"
+          class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden"
+          role="alert"
+        ></div>
 
-        <!-- 버튼 -->
-        <button id="generateButton" type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 mt-6 rounded-lg text-lg cursor-pointer transition duration-200 w-full disabled:bg-indigo-400 disabled:cursor-not-allowed">
+        <button
+          id="generateButton"
+          type="submit"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 mt-6 rounded-lg text-lg cursor-pointer transition duration-200 w-full disabled:bg-indigo-400 disabled:cursor-not-allowed"
+        >
           AI 자소서 생성하기 🚀
         </button>
       </form>
 
-      <!-- 결과 출력 영역 -->
-      <div id="output" class="bg-blue-50 border border-blue-200 p-5 rounded-lg mt-8 whitespace-pre-wrap leading-relaxed text-gray-700 min-h-[50px] shadow-inner">
+      <div
+        id="output"
+        class="bg-blue-50 border border-blue-200 p-5 rounded-lg mt-8 whitespace-pre-wrap leading-relaxed text-gray-700 min-h-[50px] shadow-inner"
+      >
         AI 자소서가 여기에 생성됩니다.
       </div>
     </main>
 
-    <!-- JavaScript 파일 연결 -->
     <script src="script.js"></script>
   </body>
 </html>
