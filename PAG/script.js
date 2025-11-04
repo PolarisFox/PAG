@@ -1,12 +1,12 @@
-// API Key는 환경에서 자동으로 주입되므로 빈 문자열로 둡니다.
-const apiKey = "";
-const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; // 최신 지침 모델 사용
-const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+const apiKey = " "; // ⭐ 여기에 실제 API Key를 입력하세요! ⭐
+const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
+const API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 // DOM 요소 참조
 const output = document.getElementById("output");
 const generateButton = document.getElementById("generateButton");
 const messageBox = document.getElementById("messageBox");
+const resumeForm = document.getElementById("resumeForm"); // 폼 요소 참조
 
 /**
  * alert() 대신 메시지 박스에 오류 또는 안내 메시지를 표시합니다.
@@ -17,7 +17,7 @@ function displayMessage(message, type = "error") {
   messageBox.textContent = message;
   messageBox.classList.remove("hidden");
 
-  // 메시지 유형에 따른 스타일 변경
+  // 메시지 유형에 따른 스타일 변경 (Tailwind classes)
   if (type === "error") {
     messageBox.className =
       "mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg";
@@ -25,6 +25,75 @@ function displayMessage(message, type = "error") {
     messageBox.className =
       "mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg";
   }
+}
+
+/**
+ * 지수 백오프를 사용하여 API 호출을 재시도합니다.
+ * API Key를 URL 대신 Authorization 헤더를 통해 전달하도록 수정됨.
+ * @param {string} url 호출할 API URL
+ * @param {object} options fetch 옵션
+ * @param {number} maxRetries 최대 재시도 횟수
+ */
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // API Key가 설정되어 있다면, Authorization 헤더를 추가합니다.
+      const headers = {
+        ...options.headers,
+        "Content-Type": "application/json",
+      };
+      if (apiKey && apiKey !== "<YOUR_ACTUAL_API_KEY_HERE>") {
+        // 키가 'Bearer' 토큰이 아니라면, 쿼리 파라미터 방식으로 다시 시도합니다.
+        // 대부분의 SDK/환경에서 요구하는 표준 API Key 방식입니다.
+        const finalUrl = `${url}?key=${apiKey}`;
+
+        const response = await fetch(finalUrl, { ...options, headers });
+
+        if (response.ok) {
+          return response;
+        }
+      } else if (!apiKey || apiKey === "<YOUR_ACTUAL_API_KEY_HERE>") {
+        // API 키가 설정되지 않았거나 기본값일 경우 즉시 오류를 발생시킵니다.
+        throw new Error(
+          "API Key가 설정되지 않았습니다. '<YOUR_ACTUAL_API_KEY_HERE>'를 실제 키로 교체해 주세요."
+        );
+      }
+
+      // HTTP 오류 응답 (4xx, 5xx) 처리
+      const response = await fetch(url, { ...options, headers });
+
+      if (response.ok) {
+        return response;
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.error?.message ||
+          `HTTP Error: ${response.status} ${response.statusText}`;
+
+        if (attempt === maxRetries) {
+          throw new Error(
+            `API 호출 실패 후 최대 재시도 횟수 도달: ${errorMessage}`
+          );
+        }
+
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    } catch (error) {
+      // 네트워크 오류 및 사용자 정의 오류 처리
+      if (attempt === maxRetries) {
+        throw new Error(
+          `네트워크 오류 후 최대 재시도 횟수 도달: ${error.message}`
+        );
+      }
+      if (error.message.includes("API Key가 설정되지 않았습니다")) {
+        throw error; // 즉시 API Key 설정 오류를 상위로 전달
+      }
+      const delay = Math.pow(2, attempt) * 1000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("알 수 없는 이유로 API 호출에 실패했습니다.");
 }
 
 /**
@@ -54,11 +123,7 @@ async function generateResume() {
   output.innerHTML =
     '<p class="text-center text-indigo-600">⏳ AI가 지원자님의 역량을 빛낼 자소서를 작성 중입니다. 잠시만 기다려주세요...</p>';
 
-  /* ======================================================================
-    🌟 프롬프트 개선: 면접관에게 깊은 인상을 주는 전략적 프롬프트 🌟
-    ======================================================================
-    */
-
+  // 프롬프트 정의
   const systemPrompt = `
 당신은 Google Gemini 기반의 **최고 수준 경력 컨설턴트 및 수석 채용 전문가**입니다.
 당신의 임무는 지원자가 제공한 정보를 바탕으로 **ATS(자동 필터링 시스템)를 통과**하고, 면접관에게 깊은 인상을 줄 수 있는 **전략적인 한국어 자기소개서**를 작성하는 것입니다.
@@ -98,19 +163,19 @@ async function generateResume() {
     -   문단 전체는 3~4문장으로 마무리하여 지원서를 인상적으로 마칩니다.
 `;
 
+  // API Key를 URL 쿼리 파라미터로 명시적으로 전달 (헤더 방식이 아닌 표준 방식)
+  const fullApiUrl = `${API_BASE_URL}${MODEL_NAME}:generateContent`;
+
   try {
     const payload = {
-      // 시스템 명령어(System Instruction)를 통해 AI의 역할과 제약 조건을 명확하게 전달
       systemInstruction: {
         parts: [{ text: systemPrompt }],
       },
-      // 사용자 프롬프트(User Prompt)를 통해 구체적인 작성 가이드 전달
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
     };
 
-    const response = await fetch(apiUrl, {
+    const response = await fetchWithRetry(fullApiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
@@ -124,7 +189,7 @@ async function generateResume() {
   } catch (err) {
     // 오류 발생 시 메시지 박스에 오류 표시
     displayMessage(
-      `🚨 오류 발생: Gemini API 호출에 실패했습니다. (세부: ${err.message})`,
+      `🚨 최종 오류 발생: 자소서 생성에 실패했습니다. ${err.message}`,
       "error"
     );
     output.textContent =
@@ -135,4 +200,12 @@ async function generateResume() {
     generateButton.disabled = false;
     generateButton.innerHTML = "AI 자소서 생성하기 🚀";
   }
+}
+
+// 폼 제출 이벤트를 프로그램적으로 연결하여 ReferenceError 방지
+if (resumeForm) {
+  resumeForm.addEventListener("submit", function (event) {
+    event.preventDefault(); // 기본 제출 동작 방지
+    generateResume();
+  });
 }
