@@ -1,119 +1,180 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ResumeGPT – Gemini 자소서 생성기</title>
+    <title>ResumeGPT – Vanilla JS + Firebase + Gemini</title>
+    <!-- Tailwind CSS CDN 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 커스텀 스타일 시트 연결 -->
     <link rel="stylesheet" href="style.css" />
-  </head>
-  <body class="bg-gray-500 text-gray-800">
-    <header
-      class="bg-indigo-600 text-white text-2xl font-semibold py-5 text-center shadow-md"
-    >
-      💼 ResumeGPT – Gemini 자소서 생성기
-    </header>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    
+    <!-- 전체 앱 컨테이너 -->
+    <div id="appContainer" class="w-full">
 
-    <main
-      class="max-w-3xl mx-auto my-8 md:my-12 bg-white p-6 md:p-10 rounded-xl shadow-2xl"
-    >
-      <form id="resumeForm">
-        <div class="space-y-4">
-          <div>
-            <label for="name" class="block font-semibold mt-4 text-gray-700"
-              >이름</label
-            >
-            <input
-              type="text"
-              id="name"
-              placeholder="예: 김지훈"
-              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-            />
-          </div>
-          <div>
-            <label for="role" class="block font-semibold mt-4 text-gray-700"
-              >지원 직무</label
-            >
-            <input
-              type="text"
-              id="role"
-              placeholder="예: 백엔드 개발자"
-              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-            />
-          </div>
-          <div>
-            <label for="company" class="block font-semibold mt-4 text-gray-700"
-              >회사명</label
-            >
-            <input
-              type="text"
-              id="company"
-              placeholder="예: Toss"
-              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-            />
-          </div>
-          <div>
-            <label for="skills" class="block font-semibold mt-4 text-gray-700"
-              >보유 기술</label
-            >
-            <input
-              type="text"
-              id="skills"
-              placeholder="예: Java, Spring Boot, MySQL"
-              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-            />
-          </div>
-          <div>
-            <label
-              for="achievements"
-              class="block font-semibold mt-4 text-gray-700"
-              >성과 또는 경험</label
-            >
-            <textarea
-              id="achievements"
-              rows="2"
-              placeholder="예: 로그인 서버 처리 속도 30% 개선, 10만 동시 접속자 처리"
-              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-            ></textarea>
-          </div>
-          <div>
-            <label
-              for="motivation"
-              class="block font-semibold mt-4 text-gray-700"
-              >지원 동기</label
-            >
-            <textarea
-              id="motivation"
-              rows="2"
-              placeholder="예: 사용자 중심의 안정적 백엔드 시스템을 구축하고 싶습니다."
-              class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out"
-            ></textarea>
-          </div>
+        <!-- 로딩/인증 확인 화면 (초기 상태) -->
+        <div id="loadingScreen" class="min-h-screen flex items-center justify-center bg-gray-50">
+            <div class="flex items-center text-xl text-gray-600">
+                <span class="loader border-gray-400 border-t-indigo-600 mr-3"></span>
+                인증 상태를 확인 중입니다...
+            </div>
         </div>
 
-        <div
-          id="messageBox"
-          class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden"
-          role="alert"
-        ></div>
+        <!-- 로그인/회원가입 화면 -->
+        <div id="loginScreen" class="hidden min-h-screen flex items-center justify-center bg-gray-50">
+            <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl">
+                <h2 id="authTitle" class="text-3xl font-bold text-center text-indigo-600 mb-6">ResumeGPT 로그인</h2>
+                
+                <div id="loginMessageBox" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden" role="alert"></div>
 
-        <button
-          id="generateButton"
-          type="submit"
-          class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 mt-6 rounded-lg text-lg cursor-pointer transition duration-200 w-full disabled:bg-indigo-400 disabled:cursor-not-allowed"
-        >
-          AI 자소서 생성하기 🚀
-        </button>
-      </form>
+                <form id="loginForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="loginEmail" class="block text-sm font-medium text-gray-700">이메일</label>
+                            <input type="email" id="loginEmail" placeholder="user@example.com" required 
+                                class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                        </div>
+                        <div>
+                            <label for="loginPassword" class="block text-sm font-medium text-gray-700">비밀번호</label>
+                            <input type="password" id="loginPassword" placeholder="******" required 
+                                class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                        </div>
+                    </div>
+                    <button type="submit" id="authSubmitButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 mt-6 rounded-lg transition duration-200">
+                        로그인
+                    </button>
+                    
+                    <p class="text-center mt-4">
+                        <a href="#" id="toggleAuthMode" class="text-sm text-indigo-500 hover:text-indigo-700 hover:underline">
+                            계정이 없으신가요? 회원가입
+                        </a>
+                    </p>
+                </form>
+                
+                <div class="flex items-center justify-center space-x-2 mt-6">
+                    <hr class="flex-grow border-gray-300" />
+                    <span class="text-gray-500 text-sm">또는</span>
+                    <hr class="flex-grow border-gray-300" />
+                </div>
+                
+                <!-- Google 로그인 버튼 -->
+                <button id="googleLoginButton" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 mt-6 rounded-lg transition duration-200 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48">
+                        <path fill="#FFC107" d="M43.61,20.083H42V20H24v8h11.343c-1.723,4.685-6.177,8-11.343,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.159,7.963,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,19.034-8.156,19.034-20c0-1.341-0.138-2.65-0.386-3.917z"/>
+                        <path fill="#FF3D00" d="M6.306,14.691l6.096,5.132C15.423,17.58,16.89,16,19,16c2.915,0,4.661,2.029,4.661,4.721c0,3.31-2.529,5.839-5.839,5.839c-2.31,0-3.909-1.393-4.996-3.704l-5.753,4.408C8.986,30.34,15.111,36,24,36c6.627,0,12-5.373,12-12c0-3.344-1.38-6.386-3.6-8.599L35.66,12.039C32.968,9.754,28.878,8,24,8C18.674,8,13.784,10.158,10.053,13.385L6.306,14.691z"/>
+                        <path fill="#4CAF50" d="M19.025,31c2.19,0,4.195-0.74,5.899-2.023l-5.657-5.657C17.828,24.952,16.619,25,16,25c-4.42,0-8-3.582-8-8c0-3.059,1.713-5.875,4.48-7.251l-5.75-4.406C6.012,12.56,4,18.06,4,24C4,29.326,6.158,34.216,9.385,37.947L19.025,31z"/>
+                        <path fill="#1976D2" d="M43.61,20.083H42V20H24v8h11.343c-1.723,4.685-6.177,8-11.343,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.159,7.963,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,19.034-8.156,19.034-20c0-1.341-0.138-2.65-0.386-3.917z M19,20c2.915,0,4.661,2.029,4.661,4.721c0,3.31-2.529,5.839-5.839,5.839c-2.31,0-3.909-1.393-4.996-3.704l-5.753,4.408C8.986,30.34,15.111,36,24,36c6.627,0,12-5.373,12-12c0-3.344-1.38-6.386-3.6-8.599L35.66,12.039C32.968,9.754,28.878,8,24,8C18.674,8,13.784,10.158,10.053,13.385L6.306,14.691z"/>
+                    </svg>
+                    Google 계정으로 로그인
+                </button>
+                <p class="text-xs text-gray-500 text-center mt-3">
+                    Google 로그인을 통해 간편하게 시작하세요.
+                </p>
+            </div>
+        </div>
 
-      <div
-        id="output"
-        class="bg-blue-50 border border-blue-200 p-5 rounded-lg mt-8 whitespace-pre-wrap leading-relaxed text-gray-700 min-h-[50px] shadow-inner"
-      >
-        AI 자소서가 여기에 생성됩니다.
-      </div>
-    </main>
+        <!-- 메인 애플리케이션 화면 (로그인 후 표시) -->
+        <div id="mainApp" class="hidden w-full">
+            
+            <!-- 헤더 -->
+            <header class="w-full bg-indigo-600 text-white text-2xl font-semibold py-5 shadow-md">
+                <div class="flex items-center justify-between max-w-5xl mx-auto px-4 md:px-8">
+                    <span class="flex items-center">
+                        <span class="mr-2 text-xl">💼</span>
+                        ResumeGPT – 전략적 자소서 생성 플랫폼
+                    </span>
+                    <button id="logoutButton" class="text-sm bg-indigo-700 hover:bg-indigo-800 px-3 py-1 rounded-md transition duration-200">
+                        로그아웃
+                    </button>
+                </div>
+            </header>
 
-    <script src="script.js"></script>
-  </body>
+            <main class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 mx-auto p-4 md:p-8">
+                
+                <!-- 1. 이력서 목록 (저장된 이력서 관리) -->
+                <div id="resumesListContainer" class="md:col-span-1 bg-white p-4 rounded-xl shadow-lg h-min md:sticky md:top-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="mr-2">📂</span> 저장된 자소서 (<span id="resumeCount">0</span>)
+                    </h3>
+                    <div id="resumesList" class="space-y-3 max-h-[70vh] overflow-y-auto">
+                        <p class="text-gray-500 text-sm p-4 border rounded-lg bg-gray-50">데이터를 로딩 중입니다...</p>
+                    </div>
+                </div>
+
+                <!-- 2. 입력 및 결과 (메인 영역) -->
+                <div class="md:col-span-2 bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 지원 정보 입력 및 AI 생성</h2>
+                    
+                    <!-- 에러/메시지 -->
+                    <div id="messageBox" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden" role="alert">
+                        <!-- 메시지 내용이 여기에 들어갑니다. -->
+                    </div>
+
+                    <form id="resumeForm">
+                        
+                        <div class="space-y-4">
+                            <!-- 이름 -->
+                            <div>
+                                <label for="name" class="block font-semibold mt-4 text-gray-700">이름</label>
+                                <input type="text" id="name" placeholder="예: 김지훈" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+                            </div>
+                            <!-- 지원 직무 -->
+                            <div>
+                                <label for="role" class="block font-semibold mt-4 text-gray-700">지원 직무</label>
+                                <input type="text" id="role" placeholder="예: 백엔드 개발자" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+                            </div>
+                            <!-- 회사명 -->
+                            <div>
+                                <label for="company" class="block font-semibold mt-4 text-gray-700">회사명</label>
+                                <input type="text" id="company" placeholder="예: Toss" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+                            </div>
+                            <!-- 보유 기술 -->
+                            <div>
+                                <label for="skills" class="block font-semibold mt-4 text-gray-700">보유 기술</label>
+                                <input type="text" id="skills" placeholder="예: Java, Spring Boot, MySQL" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" />
+                            </div>
+                            
+                            <!-- 채용 공고 (Job Description) -->
+                            <div>
+                                <label for="jobDescription" class="block font-semibold mt-4 text-gray-700">채용 공고 (Job Description) 전체 내용</label>
+                                <textarea id="jobDescription" rows="5" placeholder="채용 공고의 '자격 요건' 및 '우대 사항'을 모두 복사하여 붙여넣으세요. AI가 JD에 맞춰 자소서를 최적화합니다." class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out resize-none min-h-[80px] leading-relaxed"></textarea>
+                            </div>
+
+                            <!-- 성과 또는 경험 -->
+                            <div>
+                                <label for="achievements" class="block font-semibold mt-4 text-gray-700">성과 또는 경험 (CAR 구조에 맞춰 구체적으로)</label>
+                                <textarea id="achievements" rows="3" placeholder="예: 로그인 서버 처리 속도 30% 개선 (측정 가능한 수치 강조)" class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out resize-none min-h-[80px] leading-relaxed"></textarea>
+                            </div>
+                            
+                            <!-- 지원 동기 -->
+                            <div>
+                                <label for="motivation" class="block font-semibold mt-4 text-gray-700">지원 동기 (핵심 비전)</label>
+                                <textarea id="motivation" rows="3" placeholder="예: 사용자 중심의 안정적 백엔드 시스템을 구축하고 싶습니다." class="w-full p-3 mt-1 border border-gray-300 rounded-lg text-base focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out resize-none min-h-[80px] leading-relaxed"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 -->
+                        <button id="generateButton" type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 mt-6 rounded-lg text-lg w-full transition duration-200">
+                            AI 자소서 생성 및 저장하기 🚀
+                        </button>
+                    </form>
+
+                    <!-- 결과 출력 영역 -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-3">결과 출력 (Gemini AI)</h3>
+                        <div id="output" class="bg-blue-50 border border-blue-200 p-5 rounded-lg whitespace-pre-wrap leading-relaxed text-gray-700 min-h-[150px] shadow-inner">
+                            AI 자소서가 여기에 표시됩니다.
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- JavaScript 모듈 연결 -->
+    <script type="module" src="script.js"></script>
+</body>
 </html>
