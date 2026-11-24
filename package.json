@@ -1,0 +1,16 @@
+{
+  "name": "pag",
+  "private": true,
+  "description": "ResumeGPT – AI 자기소개서 초안 생성 (Firebase Hosting + Cloud Functions + Gemini)",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/input.css -o ./public/styles.css --minify",
+    "watch:css": "tailwindcss -i ./src/input.css -o ./public/styles.css --watch",
+    "test": "npm --prefix functions test",
+    "emulators": "npm run build:css && firebase emulators:start",
+    "deploy": "firebase deploy"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.5",
+    "tailwindcss": "^4.3.5"
+  }
+}

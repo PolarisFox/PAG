@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResumeGPT – AI 자기소개서 초안 생성</title>
+    <meta name="description" content="채용공고와 내 경험을 바탕으로 자기소개서 초안을 만들어 주는 AI 도구" />
+    <!-- App Check(reCAPTCHA Enterprise) 사이트 키. 비워 두면 App Check를 사용하지 않습니다. -->
+    <meta name="recaptcha-site-key" content="" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- 로딩 화면 -->
+    <div id="loadingScreen" class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="flex items-center text-xl text-gray-600">
+            <span class="loader loader-dark mr-3"></span>
+            인증 상태를 확인 중입니다...
+        </div>
+    </div>
+
+    <!-- 설정 오류 화면 -->
+    <div id="configErrorScreen" class="hidden min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div class="max-w-lg bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold text-red-600 mb-3">앱을 시작할 수 없습니다</h2>
+            <p id="configErrorText" class="text-gray-700 whitespace-pre-wrap"></p>
+        </div>
+    </div>
+
+    <!-- 로그인 / 회원가입 화면 -->
+    <div id="loginScreen" class="hidden min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl">
+            <h2 id="authTitle" class="text-3xl font-bold text-center text-indigo-600 mb-6">ResumeGPT 로그인</h2>
+
+            <div id="loginMessageBox" class="hidden" role="alert"></div>
+
+            <form id="loginForm" novalidate>
+                <div class="space-y-4">
+                    <div>
+                        <label for="loginEmail" class="block text-sm font-medium text-gray-700">이메일</label>
+                        <input type="email" id="loginEmail" autocomplete="email" placeholder="user@example.com" required
+                            class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+                    <div>
+                        <label for="loginPassword" class="block text-sm font-medium text-gray-700">비밀번호</label>
+                        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="6자 이상" required minlength="6"
+                            class="w-full p-3 mt-1 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+                </div>
+                <button type="submit" id="authSubmitButton" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3 px-4 mt-6 rounded-lg transition duration-200">
+                    로그인
+                </button>
+
+                <div class="flex justify-between mt-4 text-sm">
+                    <a href="#" id="toggleAuthMode" class="text-indigo-500 hover:text-indigo-700 hover:underline">계정이 없으신가요? 회원가입</a>
+                    <a href="#" id="resetPasswordLink" class="text-gray-500 hover:text-gray-700 hover:underline">비밀번호 찾기</a>
+                </div>
+            </form>
+
+            <div class="flex items-center justify-center space-x-2 mt-6">
+                <hr class="flex-grow border-gray-300" />
+                <span class="text-gray-500 text-sm">또는</span>
+                <hr class="flex-grow border-gray-300" />
+            </div>
+
+            <button id="googleLoginButton" type="button" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 mt-6 rounded-lg transition duration-200 flex items-center justify-center">
+                <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" aria-hidden="true">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                Google 계정으로 로그인
+            </button>
+        </div>
+    </div>
+
+    <!-- 메인 화면 -->
+    <div id="mainApp" class="hidden w-full">
+        <header class="w-full bg-indigo-600 text-white py-5 shadow-md">
+            <div class="flex items-center justify-between max-w-6xl mx-auto px-4 md:px-8">
+                <span class="text-xl md:text-2xl font-semibold">💼 ResumeGPT <span class="hidden md:inline text-base font-normal opacity-90">– AI 자기소개서 초안</span></span>
+                <div class="flex items-center gap-3">
+                    <span id="userEmail" class="hidden sm:inline text-sm opacity-90"></span>
+                    <button id="logoutButton" class="text-sm bg-indigo-700 hover:bg-indigo-800 px-3 py-1 rounded-md transition duration-200">로그아웃</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 mx-auto p-4 md:p-8">
+
+            <!-- 저장된 자소서 목록 -->
+            <aside class="md:col-span-1 bg-white p-4 rounded-xl shadow-lg h-min md:sticky md:top-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📂 저장된 자소서 (<span id="resumeCount">0</span>)</h3>
+                <div id="resumesList" class="resumes-list space-y-3 max-h-[70vh] overflow-y-auto">
+                    <p class="text-gray-500 text-sm p-4 border rounded-lg bg-gray-50">데이터를 불러오는 중입니다...</p>
+                </div>
+            </aside>
+
+            <!-- 입력 및 결과 -->
+            <section class="md:col-span-2 bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 지원 정보 입력</h2>
+
+                <div id="messageBox" class="hidden" role="alert"></div>
+
+                <form id="resumeForm" novalidate>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="company" class="field-label">회사명 <span class="text-red-500">*</span></label>
+                            <input type="text" id="company" maxlength="100" required placeholder="예: Toss" class="field-input" />
+                        </div>
+                        <div>
+                            <label for="role" class="field-label">지원 직무 <span class="text-red-500">*</span></label>
+                            <input type="text" id="role" maxlength="100" required placeholder="예: 백엔드 개발자" class="field-input" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="question" class="field-label">자기소개서 문항</label>
+                            <input type="text" id="question" maxlength="500" placeholder="비워 두면 '입사 후 포부'로 작성합니다. 예: 지원 동기와 입사 후 포부를 기술하시오." class="field-input" />
+                        </div>
+                        <div>
+                            <label for="charLimit" class="field-label">글자수 제한 (공백 포함)</label>
+                            <input type="number" id="charLimit" min="100" max="5000" step="50" placeholder="예: 1000 (없으면 비움)" class="field-input" />
+                        </div>
+                        <div>
+                            <label for="name" class="field-label">이름 <span class="text-gray-400 font-normal text-sm">(선택, 목록 표시용 · AI에 전송 안 함)</span></label>
+                            <input type="text" id="name" maxlength="50" placeholder="예: 김지훈" class="field-input" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mt-4">
+                        <div>
+                            <label for="skills" class="field-label">보유 기술</label>
+                            <input type="text" id="skills" maxlength="1000" placeholder="예: Java, Spring Boot, MySQL" class="field-input" />
+                        </div>
+                        <div>
+                            <label for="jobDescription" class="field-label">채용 공고 (JD) 내용 <span id="jdCount" class="char-hint"></span></label>
+                            <textarea id="jobDescription" rows="5" maxlength="8000" placeholder="채용 공고의 '주요 업무', '자격 요건', '우대 사항'을 붙여 넣으세요." class="field-input"></textarea>
+                        </div>
+                        <div>
+                            <label for="achievements" class="field-label">성과 및 경험 <span id="achCount" class="char-hint"></span></label>
+                            <textarea id="achievements" rows="4" maxlength="4000" placeholder="상황 · 내가 한 일 · 결과(수치)를 구체적으로. 예: 로그인 API 응답 지연 문제를 캐시 도입으로 해결해 평균 응답 시간 30% 단축" class="field-input"></textarea>
+                        </div>
+                        <div>
+                            <label for="motivation" class="field-label">지원 동기 / 핵심 비전</label>
+                            <textarea id="motivation" rows="3" maxlength="2000" placeholder="예: 대규모 트래픽을 안정적으로 처리하는 결제 시스템을 만들고 싶습니다." class="field-input"></textarea>
+                        </div>
+                        <label class="flex items-start gap-2 text-sm text-gray-700">
+                            <input type="checkbox" id="useSearch" checked class="mt-1" />
+                            <span>Google 검색으로 기업 최신 정보 확인 <span class="text-gray-500">(인재상·사업 현황 반영, 응답이 조금 느려질 수 있음)</span></span>
+                        </label>
+                    </div>
+
+                    <button id="generateButton" type="submit" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3 px-6 mt-6 rounded-lg text-lg w-full transition duration-200">
+                        AI 자소서 생성 및 저장하기 🚀
+                    </button>
+                    <p id="quotaHint" class="text-xs text-gray-500 text-center mt-2"></p>
+                </form>
+
+                <!-- 결과 -->
+                <div class="mt-10">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <h3 class="text-xl font-bold text-gray-800">결과</h3>
+                        <div class="flex items-center gap-3">
+                            <span id="essayCount" class="text-sm text-gray-600"></span>
+                            <button id="copyEssayButton" type="button" class="hidden text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 px-3 py-1 rounded-md">본문 복사</button>
+                        </div>
+                    </div>
+                    <div id="output" class="result-box">AI 자소서가 여기에 표시됩니다.</div>
+                    <div id="groundingBox" class="hidden mt-4 space-y-3">
+                        <div id="searchSuggestions"></div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 mb-1">참고한 출처</p>
+                            <ul id="sourcesList" class="text-sm list-disc pl-5 space-y-1"></ul>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4">AI 초안은 사실과 다를 수 있습니다. [대괄호] 부분을 실제 내용으로 채우고, 기업 정보는 직접 확인한 뒤 제출하세요.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

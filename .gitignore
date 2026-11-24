@@ -1,0 +1,10 @@
+node_modules/
+public/styles.css
+.firebase/
+*.log
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+functions/.env.local
+functions/.secret.local
+.runtimeconfig.json

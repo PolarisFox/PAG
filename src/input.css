@@ -1,0 +1,67 @@
+/* Tailwind v4 입력 파일 → npm run build:css 로 public/styles.css 생성 */
+@import "tailwindcss";
+@source "../public";
+
+@theme {
+  --font-sans: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", system-ui, sans-serif;
+}
+
+@layer components {
+  .field-label {
+    @apply block font-semibold text-gray-700;
+  }
+  .field-input {
+    @apply w-full p-3 mt-1 border border-gray-300 rounded-lg text-base leading-relaxed
+      focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out;
+  }
+  textarea.field-input {
+    @apply min-h-[80px];
+    resize: vertical;
+  }
+  .char-hint {
+    @apply float-right text-xs font-normal text-gray-400;
+  }
+  .msg {
+    @apply mb-4 p-3 rounded-lg border whitespace-pre-wrap;
+  }
+  .msg-error {
+    @apply bg-red-100 border-red-400 text-red-700;
+  }
+  .msg-info {
+    @apply bg-green-100 border-green-400 text-green-700;
+  }
+  .result-box {
+    @apply bg-blue-50 border border-blue-200 p-5 rounded-lg leading-relaxed text-gray-700 min-h-[150px] shadow-inner
+      whitespace-pre-wrap space-y-2;
+  }
+  .result-heading {
+    @apply text-base font-bold text-indigo-700 pt-3 first:pt-0;
+  }
+}
+
+/* 로딩 스피너 */
+.loader {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.loader-dark {
+  border-color: #9ca3af;
+  border-bottom-color: transparent;
+}
+@keyframes rotation {
+  to { transform: rotate(360deg); }
+}
+
+/* 목록 스크롤바 (WebKit) */
+.resumes-list::-webkit-scrollbar { width: 6px; }
+.resumes-list::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+.resumes-list::-webkit-scrollbar-track { background: #f1f5f9; }
