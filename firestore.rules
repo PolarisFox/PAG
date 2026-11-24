@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // 자소서: 본인만 읽기/삭제. 생성은 Cloud Function(Admin SDK)만 가능.
+    // (클라이언트가 searchEntryPointHtml 같은 필드를 조작해 저장하지 못하게 함)
+    match /users/{uid}/resumes/{resumeId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if false;
+    }
+
+    // 일일 사용량 카운터: 서버 전용
+    match /usage/{uid} {
+      allow read, write: if false;
+    }
+
+    // 그 외 모든 경로 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "pag-functions",
+  "private": true,
+  "description": "ResumeGPT backend: Gemini proxy with auth, quota and Firestore persistence",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "serve": "firebase emulators:start --only functions,firestore,auth",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "@google/genai": "^3.6.1",
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0"
+  }
+}
